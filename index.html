@@ -1,0 +1,318 @@
+<?php
+require 'db.php';
+
+// ✅ Create
+if (isset($_POST['create'])) {
+    $stmt = $pdo->prepare("INSERT INTO users (name, email, course) VALUES (?, ?, ?)");
+    $stmt->execute([$_POST['name'], $_POST['email'], $_POST['course']]);
+    header("Location: index.php");
+    exit;
+}
+
+// ✅ Update
+if (isset($_POST['update'])) {
+    $stmt = $pdo->prepare("UPDATE users SET name=?, email=?, course=? WHERE id=?");
+    $stmt->execute([$_POST['name'], $_POST['email'], $_POST['course'], $_POST['id']]);
+    header("Location: index.php");
+    exit;
+}
+
+// ✅ Delete
+if (isset($_GET['delete'])) {
+    $stmt = $pdo->prepare("DELETE FROM users WHERE id=?");
+    $stmt->execute([$_GET['delete']]);
+    header("Location: index.php");
+    exit;
+}
+
+// ✅ Fetch all users
+$users = $pdo->query("SELECT * FROM users ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+
+// ✅ Edit user
+$editUser = null;
+if (isset($_GET['edit'])) {
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE id=?");
+    $stmt->execute([$_GET['edit']]);
+    $editUser = $stmt->fetch(PDO::FETCH_ASSOC);
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>.</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* 🌌 Animated Holographic Background */
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at 20% 20%, #ff00cc, transparent 40%),
+              radial-gradient(circle at 80% 80%, #00ffcc, transparent 40%),
+              linear-gradient(270deg, #ff00cc, #ff9900, #00ffcc, #0066ff, #ff3399, #33ff57);
+  background-size: 300% 300%;
+  animation: gradientShift 7s ease infinite;
+  color: #fff;
+}
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 🌟 Glassmorphic Neon Container */
+.container {
+  width: 520px;
+  padding: 40px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 40px rgba(255,255,255,0.15),
+    inset 0 0 40px rgba(255,255,255,0.05);
+  text-align: center;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  transition: 0.5s;
+}
+.container:hover {
+  transform: scale(1.01);
+  box-shadow: 0 0 50px rgba(255,255,255,0.2), inset 0 0 60px rgba(255,255,255,0.05);
+}
+
+/* 🌈 Glowing Orb Logo */
+.logo-floating {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  margin: 0 auto 25px;
+  border-radius: 50%;
+  background: linear-gradient(270deg, #ff00cc, #ff9900, #00ffcc, #0066ff, #ff3399, #33ff57);
+  background-size: 600% 600%;
+  animation: gradientShift 7s linear infinite, float 4s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 58px;
+  color: #fff;
+  text-shadow: 0 0 30px rgba(255,255,255,0.9);
+  box-shadow:
+    0 0 40px rgba(255, 255, 255, 0.6),
+    0 0 80px rgba(255, 255, 255, 0.3),
+    0 0 120px rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+.logo-floating::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: conic-gradient(270deg, #ff00cc, #ff9900, #00ffcc, #0066ff, #ff3399, #33ff57);
+  animation: spin 6s linear infinite;
+  filter: blur(8px);
+  z-index: -1;
+}
+.logo-floating::after {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), rgba(255,255,255,0) 70%);
+  filter: blur(14px);
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+h1 {
+  font-size: 2.4em;
+  margin-bottom: 30px;
+  background: linear-gradient(270deg, #ff00cc, #ff9900, #00ffcc, #0066ff, #ff3399, #33ff57);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 7s linear infinite;
+  letter-spacing: 1px;
+}
+
+/* 📝 Glowing Input Form */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+input {
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  transition: 0.4s;
+}
+input:focus {
+  border-color: transparent;
+  box-shadow: 0 0 20px rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.15);
+}
+input::placeholder { color: #ddd; }
+
+/* 🌟 Glowing Buttons */
+button {
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(270deg, #ff00cc, #ff9900, #00ffcc, #0066ff, #ff3399, #33ff57);
+  background-size: 300% 300%;
+  animation: gradientShift 7s linear infinite;
+  box-shadow: 0 0 20px rgba(255,255,255,0.4);
+  transition: 0.3s;
+}
+button:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 0 35px rgba(255,255,255,0.7);
+}
+
+/* 📊 Rainbow Table */
+.table-scroll {
+  overflow-x: auto;
+  border-radius: 16px;
+  margin-top: 20px;
+  border: 2px solid transparent;
+  position: relative;
+  box-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+.table-scroll::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 16px;
+  background: linear-gradient(270deg, #ff00cc, #ff9900, #00ffcc, #0066ff, #ff3399, #33ff57);
+  background-size: 400% 400%;
+  animation: gradientShift 7s linear infinite;
+  z-index: -1;
+  filter: blur(5px);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+}
+th, td {
+  padding: 14px;
+  text-align: center;
+}
+thead {
+  background: linear-gradient(270deg, #ff00cc, #ff9900, #00ffcc, #0066ff, #ff3399, #33ff57);
+  background-size: 300% 300%;
+  animation: gradientShift 7s linear infinite;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+tbody tr:nth-child(odd) { background: rgba(255,255,255,0.07); }
+tbody tr:nth-child(even) { background: rgba(255,255,255,0.13); }
+tbody tr:hover {
+  background: rgba(255,255,255,0.18);
+  transition: 0.3s;
+}
+
+/* ✏️ Edit / 🗑️ Delete Buttons */
+a.edit, a.delete {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.3s;
+  background-size: 300% 300%;
+  animation: gradientShift 7s linear infinite;
+  box-shadow: 0 0 15px rgba(255,255,255,0.3);
+}
+a.edit {
+  background: linear-gradient(270deg, #ff00cc, #ff9900, #00ffcc, #0066ff, #ff3399, #33ff57);
+  color: #fff;
+}
+a.delete {
+  background: linear-gradient(270deg, #ff00cc, #ff9900, #00ffcc, #0066ff, #ff3399, #33ff57);
+  color: #fff;
+}
+a.edit:hover, a.delete:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 0 25px rgba(255,255,255,0.6);
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo-floating">🎓</div>
+  <h1>Student Management</h1>
+
+  <!-- 📝 Add / Update Form -->
+  <form method="POST">
+    <input type="hidden" name="id" value="<?= htmlspecialchars($editUser['id'] ?? '') ?>">
+    <input type="text" name="name" placeholder="Name" value="<?= htmlspecialchars($editUser['name'] ?? '') ?>" required>
+    <input type="email" name="email" placeholder="Email" value="<?= htmlspecialchars($editUser['email'] ?? '') ?>" required>
+    <input type="text" name="course" placeholder="Course" value="<?= htmlspecialchars($editUser['course'] ?? '') ?>" required>
+    <button type="submit" name="<?= $editUser ? 'update' : 'create' ?>">
+      <?= $editUser ? 'Update User' : 'Add User' ?>
+    </button>
+    <?php if ($editUser): ?>
+      <a href="index.php" style="display:block;margin-top:10px;color:#fff;">Cancel</a>
+    <?php endif; ?>
+  </form>
+
+  <!-- 📊 Glowing Table -->
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Course</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($users as $user): ?>
+        <tr>
+          <td><?= htmlspecialchars($user['id']) ?></td>
+          <td><?= htmlspecialchars($user['name']) ?></td>
+          <td><?= htmlspecialchars($user['email']) ?></td>
+          <td><?= htmlspecialchars($user['course']) ?></td>
+          <td>
+            <a class="edit" href="?edit=<?= $user['id'] ?>">Edit</a>
+            <a class="delete" href="?delete=<?= $user['id'] ?>" onclick="return confirm('Are you sure?')">Delete</a>
+          </td>
+        </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>
